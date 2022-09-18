@@ -52,12 +52,5 @@ public class Application extends GameFrame<Scenes, Tag, Key> {
             GUI_Controller.INSTANCE.toFullScreen();
         else if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
             GUI_Controller.INSTANCE.cancelFullScreen();
-        // else if(e.getKeyCode() == KeyEvent.VK_SHIFT) {
-        //     try {
-        //         GUI_Controller.INSTANCE.setGame(SaveData.INSTANCE.load_中断セーブデータ());
-        //     } catch (ClassNotFoundException | IOException e1) {
-        //         e1.printStackTrace();
-        //     }
-        // }
     }
 }

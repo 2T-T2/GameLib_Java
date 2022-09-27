@@ -11,7 +11,7 @@ import t_panda.game.event.GameDrawListener;
 /**
  * ゲームの機能を実装するインターフェイス
  */
-public interface IGame<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> extends IUpdatable<VKEYPAD>, ISceneChanger<SCENE>, IDrawable, Runnable, ImageObserver, Serializable {
+public interface IGame<SCENE extends Enum<SCENE>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> extends IUpdatable<VKEYPAD>, ISceneChanger<SCENE>, IDrawable, Runnable, ImageObserver, Serializable {
     /**
      * 透明色ARGB(0,0,0,0)
      */
@@ -92,7 +92,7 @@ public interface IGame<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>,
      * 現在のシーンを返します。
      * @return 現在のシーン
      */
-    IScene<SCENE, OBJ_TAG, VKEYPAD> getCurrentScene();
+    IScene<SCENE, ?, VKEYPAD, ?, ?> getCurrentScene();
     /**
      * ゲームのFpsを取得します。
      * @return ゲームのFps
@@ -139,11 +139,11 @@ public interface IGame<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>,
     /**
      * IGameオブジェクトを生成する機能を提供します。
      */
-    public interface IBuilder<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> {
+    public interface IBuilder<SCENE extends Enum<SCENE>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> {
         /**
          * ビルダーをビルドしてGameオブジェクトを生成します。
          * @return ビルダーをビルドして生成したIGameオブジェクト
          */
-        IGame<SCENE, OBJ_TAG, VKEYPAD> build();
+        IGame<SCENE, VKEYPAD> build();
     }
 }

@@ -17,9 +17,9 @@ import t_panda.game.IKeyCodeGetable;
  * @see IGame
  * @see JFrame
  */
-public class GameFrame<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> extends JFrame implements ComponentListener, Runnable, KeyListener {
+public class GameFrame<SCENE extends Enum<SCENE>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> extends JFrame implements ComponentListener, Runnable, KeyListener {
     /** ゲーム画面を表示するパネル */
-    private final GamePanel<SCENE, OBJ_TAG, VKEYPAD> gPanel;
+    private final GamePanel<SCENE, VKEYPAD> gPanel;
     /** */
     private final float gameAspect;
 
@@ -27,7 +27,7 @@ public class GameFrame<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>,
      * コンストラクタ
      * @param game ゲームオブジェクト
      */
-    public GameFrame(IGame<SCENE, OBJ_TAG, VKEYPAD> game) {
+    public GameFrame(IGame<SCENE, VKEYPAD> game) {
         this.gameAspect = (float)game.getGameWidth() / (float)game.getGameHeight();
 
         getContentPane().setPreferredSize(new java.awt.Dimension(game.getGameWidth(), game.getGameHeight()));
@@ -49,7 +49,7 @@ public class GameFrame<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>,
      * 自身に設定されたIGame継承オブジェクトを取得します。
      * @return 自身に設定されたIGame継承オブジェクト
      */
-    public IGame<SCENE, OBJ_TAG, VKEYPAD> getGame() {
+    public IGame<SCENE, VKEYPAD> getGame() {
         return this.gPanel.getGame();
     }
 

@@ -5,12 +5,12 @@ import java.awt.Graphics;
 /**
  * ゲーム内オブジェクトの動作を実装させるインターフェース
  */
-public interface IGObject<SCENE extends Enum<SCENE>, TAG extends Enum<TAG>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> extends IDrawable, IUpdatable<VKEYPAD>, IGObjectHost<SCENE, TAG, VKEYPAD>, ISceneChanger<SCENE>, IHasRectHit {
+public interface IGObject<SCENE extends Enum<SCENE>, TAG extends Enum<TAG>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable, MSG, CHILD extends IGObject<SCENE, TAG, VKEYPAD, MSG, ?>> extends IDrawable, IUpdatable<VKEYPAD>, IGObjectHost<SCENE, TAG, VKEYPAD, MSG, CHILD>, ISceneChanger<SCENE>, IHasRectHit {
     /**
      * 初期化関数。IGObjectHostに所属したときに呼び出されます。
-     * @param arg 初期化に使用する引数。
+     * @param initArg 初期化に使用する引数。
      */
-    void init(InitArg<SCENE, TAG, VKEYPAD> arg);
+    void init(InitArg<SCENE, TAG, VKEYPAD, MSG> initArg);
     /**
      * IGObjectHostに属しているかを判定します。
      * @return IGObjectHostに属しているか
@@ -24,11 +24,6 @@ public interface IGObject<SCENE extends Enum<SCENE>, TAG extends Enum<TAG>, VKEY
      * 所属するIGObjectHostから削除されるようにします。
      */
     void destroy();
-    /**
-     * 所属するISceneに指定されたIGObjectを追加します
-     * @param obj 所属するISceneに追加するIGObject
-     */
-    void addObjToScene(IGObject<SCENE, TAG, VKEYPAD> obj);
     /**
      * 自身がもつタグ情報を取得します。
      * @return 自身がもつタグ情報
@@ -69,22 +64,23 @@ public interface IGObject<SCENE extends Enum<SCENE>, TAG extends Enum<TAG>, VKEY
      * @param <SCENE> シーン識別Enum
      * @param <TAG> オブジェクト識別タグEnum
      * @param <VKEYPAD> キー識別タグEnum
+     * @param <MSG> メッセージクラス
      * @param host 初期化するIGObjectが属するホスト
      * @param scene 初期化するIGObjectが属するシーン
      * @return IGObjectを初期化する引数オブジェクト
      */
-    static <SCENE extends Enum<SCENE>, TAG extends Enum<TAG>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable>InitArg<SCENE, TAG, VKEYPAD> createInitArg(IGObjectHost<SCENE, TAG, VKEYPAD> host, IScene<SCENE, TAG, VKEYPAD> scene) {
-        return new InitArg<SCENE, TAG, VKEYPAD>(host, scene);
+    static <SCENE extends Enum<SCENE>, TAG extends Enum<TAG>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable, MSG>InitArg<SCENE, TAG, VKEYPAD, MSG> createInitArg(IGObjectHost<SCENE, TAG, VKEYPAD, MSG, IGObject<SCENE, TAG, VKEYPAD, MSG, ?>> host, IScene<SCENE, TAG, VKEYPAD, MSG, ?> scene) {
+        return new InitArg<>(host, scene);
     }
     /**
      * IGObjectの初期化に使用する引数オブジェクト
      * @see IGObject#init(InitArg)
      */
-    public class InitArg<SCENE extends Enum<SCENE>, TAG_OBJ extends Enum<TAG_OBJ>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> {
-        private final IGObjectHost<SCENE, TAG_OBJ, VKEYPAD> host;
-        private final IScene<SCENE, TAG_OBJ, VKEYPAD> scene;
+    public class InitArg<SCENE extends Enum<SCENE>, TAG extends Enum<TAG>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable, MSG> {
+        private final IGObjectHost<SCENE, TAG, VKEYPAD, MSG, IGObject<SCENE, TAG, VKEYPAD, MSG, ?>> host;
+        private final IScene<SCENE, TAG, VKEYPAD, MSG, ?> scene;
 
-        private InitArg(IGObjectHost<SCENE, TAG_OBJ, VKEYPAD> host, IScene<SCENE, TAG_OBJ, VKEYPAD> scene) {
+        private InitArg(IGObjectHost<SCENE, TAG, VKEYPAD, MSG, IGObject<SCENE, TAG, VKEYPAD, MSG, ?>> host, IScene<SCENE, TAG, VKEYPAD, MSG, ?> scene) {
             this.host = host;
             this.scene = scene;
         }
@@ -93,14 +89,14 @@ public interface IGObject<SCENE extends Enum<SCENE>, TAG extends Enum<TAG>, VKEY
          * 初期化対象のIGObjectのホストを取得します
          * @return 初期化対象のIGObjectのホスト
          */
-        public IGObjectHost<SCENE, TAG_OBJ, VKEYPAD> getHost() {
+        public IGObjectHost<SCENE, TAG, VKEYPAD, MSG, IGObject<SCENE, TAG, VKEYPAD, MSG, ?>> getHost() {
             return host;
         }
         /**
          * 初期化対象のIGObjectが属するシーンを取得します
          * @return 初期化対象のIGObjectが属するシーン
          */
-        public IScene<SCENE, TAG_OBJ, VKEYPAD> getScene() {
+        public IScene<SCENE, TAG, VKEYPAD, MSG, ?> getScene() {
             return scene;
         }
     }

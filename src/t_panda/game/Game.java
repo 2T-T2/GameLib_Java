@@ -24,7 +24,7 @@ import t_panda.game.event.GameDrawListener;
  * デシリアライズによって復元されたときには、自動で追加される以外の、ChangeEventListener、GameDrawListenerは、未登録状態になります。
  * @see IGame
  */
-public class Game<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> implements IGame<SCENE, OBJ_TAG, VKEYPAD> {
+public class Game<SCENE extends Enum<SCENE>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> implements IGame<SCENE, VKEYPAD> {
     /**ゲームの画面画像 */
     private transient BufferedImage gameImage;
     /**ゲームのシーンが変更されたときに発生するイベントのリスナを保持している可変長配列 */
@@ -41,7 +41,7 @@ public class Game<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEY
     /**ゲーム解像度横幅 */
     private final int gameHeight;
     /**シーン配列 */
-    private final ArrayList<IScene<SCENE, OBJ_TAG, VKEYPAD>> scenes;
+    private final ArrayList<IScene<SCENE, ?, VKEYPAD, ?, ?>> scenes;
 
     /**マウス入力保持オブジェクト */
     private final MouseInput mouseInput;
@@ -62,7 +62,7 @@ public class Game<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEY
     /** 実際のマウス入力座標をゲームの解像度にあわせたゲーム座標にスケーリングする*/
     private float mouseInputScale;
 
-    private Game(Game.Builder<SCENE, OBJ_TAG, VKEYPAD> builder) {
+    private Game(Game.Builder<SCENE, VKEYPAD> builder) {
         this.gameWidth = builder.width;
         this.gameHeight = builder.height;
         this.scenes = builder.scenes;
@@ -141,8 +141,7 @@ public class Game<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEY
     }
 
     @Override
-    public void update(IKeyInput<VKEYPAD> keyInput, MouseInput mouseInput) {
-        mouseInput.setScale(mouseInputScale);
+    public void update(IKeyInput<VKEYPAD> keyInput, IMouseInput mouseInput) {
         getCurrentScene().update(keyInput, mouseInput);
         resetMouseInput();
         changeSceneIfNeeded();
@@ -190,6 +189,7 @@ public class Game<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEY
                 Thread.sleep(1000/getFps());
                 if(gameThreadPouseFlg) continue;
                 if(getCurrentScene() == null || gameThreadEndFlg) break;
+                mouseInput.setScale(mouseInputScale);
                 update(keyInput, mouseInput);
                 draw(g);
                 keyInput.update();
@@ -206,7 +206,7 @@ public class Game<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEY
     }
 
     @Override
-    public IScene<SCENE, OBJ_TAG, VKEYPAD> getCurrentScene() {
+    public IScene<SCENE, ?, VKEYPAD, ?, ?> getCurrentScene() {
         return this.scenes.get(this.currentScene.ordinal());
     }
 
@@ -308,9 +308,9 @@ public class Game<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEY
     /**
      * Gameオブジェクトを生成するビルダークラス。
      */
-    public static class Builder <SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> implements IGame.IBuilder<SCENE, OBJ_TAG, VKEYPAD> {
+    public static class Builder <SCENE extends Enum<SCENE>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> implements IGame.IBuilder<SCENE, VKEYPAD> {
         private final ArrayList<ChangeSceneListener<SCENE>> changeSceneListeners;
-        private final ArrayList<IScene<SCENE, OBJ_TAG, VKEYPAD>> scenes;
+        private final ArrayList<IScene<SCENE, ?, VKEYPAD, ?, ?>> scenes;
         private final int height;
         private final int width;
 
@@ -333,9 +333,9 @@ public class Game<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEY
             this.changeSceneListeners = new ArrayList<>();
             this.initArgData = null;
         }
-        public IGame<SCENE, OBJ_TAG, VKEYPAD> build() {
-            Collections.sort(this.scenes, new Comparator<IScene<SCENE, OBJ_TAG, VKEYPAD>>() {
-                public int compare(IScene<SCENE, OBJ_TAG, VKEYPAD> arg0, IScene<SCENE, OBJ_TAG, VKEYPAD> arg1) {
+        public IGame<SCENE, VKEYPAD> build() {
+            Collections.sort(this.scenes, new Comparator<IScene<SCENE, ?, VKEYPAD, ?, ?>>() {
+                public int compare(IScene<SCENE, ?, VKEYPAD, ?, ?> arg0, IScene<SCENE, ?, VKEYPAD, ?, ?> arg1) {
                     return arg0.getSceneName().ordinal() - arg1.getSceneName().ordinal();
                 }                
             });
@@ -346,7 +346,7 @@ public class Game<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEY
          * @param fps ゲームのFPS
          * @return 設定後の自身
          */
-        public Builder<SCENE, OBJ_TAG, VKEYPAD> fps(int fps) {
+        public Builder<SCENE, VKEYPAD> fps(int fps) {
             this.isSetFps = true;
             this.fps = fps;
             return this;
@@ -356,7 +356,7 @@ public class Game<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEY
          * @param scene ゲームのシーン
          * @return 設定後の自身
          */
-        public Builder<SCENE, OBJ_TAG, VKEYPAD> addScene(IScene<SCENE, OBJ_TAG, VKEYPAD> scene) {
+        public Builder<SCENE, VKEYPAD> addScene(IScene<SCENE, ?, VKEYPAD, ?, ?> scene) {
             this.scenes.add(scene);
             this.changeSceneListeners.add(scene);
             return this;
@@ -366,7 +366,7 @@ public class Game<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEY
          * @param data 最初のシーンを初期化する時に使用するデータ
          * @return 設定後の自身
          */
-        public Builder<SCENE, OBJ_TAG, VKEYPAD> initData(Object data) {
+        public Builder<SCENE, VKEYPAD> initData(Object data) {
             this.initArgData = data;
             return this;
         }

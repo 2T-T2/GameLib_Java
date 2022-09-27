@@ -19,17 +19,24 @@ import t_panda.game.event.ChangeSceneListener;
  * ISceneを実装したクラス
  * @see IScene
  */
-abstract public class Scene<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> implements IScene<SCENE, OBJ_TAG, VKEYPAD> {
+abstract public class Scene<
+    SCENE extends Enum<SCENE>,
+    OBJ_TAG extends Enum<OBJ_TAG>,
+    KEYPAD extends Enum<KEYPAD> & IKeyCodeGetable,
+    MSG,
+    // CHILD extends IGObject<SCENE, OBJ_TAG, KEYPAD, MSG, IGObject<SCENE, OBJ_TAG, KEYPAD, MSG, ?>>>
+    CHILD extends IGObject<SCENE, OBJ_TAG, KEYPAD, MSG, ?>>
+    implements IScene<SCENE, OBJ_TAG, KEYPAD, MSG, CHILD> {
+
     /** このゲーム画面に描画するこのシーンの画面画像 */
     private transient BufferedImage scene_image;
     /** このシーンの親であるIGame継承オブジェクト */
-    private transient IGame<SCENE, OBJ_TAG, VKEYPAD> parent;
-    private transient boolean desirializeAndNeverCallUpdateFlg = false;
+    private transient IGame<SCENE, KEYPAD> parent;
 
     /** このシーンに属するIGObject継承オブジェクト */
-    private ArrayList<IGObject<SCENE, OBJ_TAG, VKEYPAD>> children;
+    private ArrayList<CHILD> children;
     /** 1フレームで追加されるべきIGObject継承オブジェクト */
-    private ArrayList<IGObject<SCENE, OBJ_TAG, VKEYPAD>> addObjs;
+    private ArrayList<CHILD> addObjs;
     /** シーン識別Enumオブジェクト
      */
     private final SCENE sceneName;
@@ -49,13 +56,6 @@ abstract public class Scene<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_
         this.sceneName = scene;
     }
     /**
-     * 自身がデシリアライズによってインスタンスが生成されているかつ、{@link #update(IKeyInput, MouseInput)}が呼び出されていない状態で有るかどうかを判定します。
-     * @return 自身がデシリアライズによってインスタンスが生成されているかつ、{@link #update(IKeyInput, MouseInput)}が呼び出されていない状態で有るかどうか
-     */
-    protected boolean isDeserializeAndNeverCallUpdate() {
-        return desirializeAndNeverCallUpdateFlg;
-    }
-    /**
      * シーン画像をゲーム画面に描画します
      * @param g ゲーム画面に描画するためのGraphics
      */
@@ -65,7 +65,7 @@ abstract public class Scene<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_
     }
     /**
      * 自身のシーンになってからのフレームのカウント数を更新します。
-     * {@link #update(IKeyInput, MouseInput)}で呼び出されます。
+     * {@link #update(IKeyInput, IMouseInput)}で呼び出されます。
      */
     protected void frameCountUp() {
         frameCount++;
@@ -123,28 +123,9 @@ abstract public class Scene<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_
     // ================ IScene Method ================
     /**
      * {@inheritDoc}。シリアライズ化を行う場合には、デフォルトの動作では、属していたIGObjectが空になります。それを意図しない場合は、{@link #initMetaData(t_panda.game.IScene.InitArg)}と、{@link #initSceneImage(int, int)}を呼び出すようにしてください。
-     * <pre> デシリアライズ時に考えられるサンプルコード
-     * {@code
-     * @Override public void init(InitArg<?,?,?> initArg) {
-     *   if(isDeserializeAndNeverCallUpdate()) {
-     *     initMetaData(initArg);
-     *     initSceneImage(getGameWidth(), getGameHeight());
-     *     // initChildrenList();     これを呼び出すと、シリアライズ時に属していたIGObjectが無くなる。
-     *     |
-     *     | デシリアライズされたときの初期化処理。
-     *     |
-     *     return;
-     *   }
-     *   super.init(initArg);
-     *   |
-     *   | 通常の初期化処理
-     *   |
-     * }
-     * }
-     * </pre>
      */
     @Override
-    public void init(InitArg<SCENE, OBJ_TAG, VKEYPAD> initArg) {
+    public void init(InitArg<SCENE, KEYPAD> initArg) {
         initMetaData(initArg);
         initSceneImage(getGameWidth(), getGameHeight());
         initChildrenList();
@@ -160,14 +141,13 @@ abstract public class Scene<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_
         drawToScreen(g);
     }
     @Override
-    public void update(IKeyInput<VKEYPAD> keyInput, MouseInput mouseInput) {
+    public void update(IKeyInput<KEYPAD> keyInput, IMouseInput mouseInput) {
         updateChildObj(children, keyInput, mouseInput);
         frameCountUp();
-        this.desirializeAndNeverCallUpdateFlg = false;
     }
 
     @Override
-    public IGObject<SCENE, OBJ_TAG, VKEYPAD> getChildByIndex(int index) {
+    public CHILD getChildByIndex(int index) {
         return this.children.get(index);
     }
     @Override
@@ -215,21 +195,13 @@ abstract public class Scene<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_
         this.drawCenterY = y;
     }
     @Override
-    public void addObj(IGObject<SCENE, OBJ_TAG, VKEYPAD> obj) {
+    public void addObj(CHILD obj) {
         addObjs.add(obj);
-        obj.init(IGObject.createInitArg(this, this));
+        obj.init(IGObject.<SCENE, OBJ_TAG, KEYPAD, MSG>createInitArg(null, this));
     }
     @Override
-    public void addObjToHost(IGObject<SCENE, OBJ_TAG, VKEYPAD> obj) {
-        addObj(obj);
-    }
-    @Override
-    public void destroyObject(IGObject<SCENE, OBJ_TAG, VKEYPAD> obj) {
+    public void destroyObject(CHILD obj) {
         obj.destroy();
-    }
-    @Override
-    public void destroyObjectFromHost(IGObject<SCENE, OBJ_TAG, VKEYPAD> obj) {
-        destroyObject(obj);
     }
     // ================= IGOjectHoser =================
     @Override
@@ -277,7 +249,7 @@ abstract public class Scene<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_
      * 内部処理を正常に行うための初期化処理。通常{@link #init(t_panda.game.IScene.InitArg)}で呼び出します。
      * @param initArg 初期化初期を行うための引数オブジェクト
      */
-    final protected void initMetaData(InitArg<SCENE, OBJ_TAG, VKEYPAD> initArg) {
+    final protected void initMetaData(InitArg<SCENE, KEYPAD> initArg) {
         parent = initArg.getHost();
     }
     /**
@@ -335,6 +307,5 @@ abstract public class Scene<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_
         try(var bais = new ByteArrayInputStream(in.readNBytes(len))) {
             this.scene_image = ImageIO.read(bais);
         }
-        this.desirializeAndNeverCallUpdateFlg = true;
     }
 }

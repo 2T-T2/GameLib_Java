@@ -9,7 +9,6 @@ import java.awt.event.MouseMotionListener;
 
 import javax.swing.JPanel;
 
-// import t_panda.game.Game;
 import t_panda.game.IGame;
 import t_panda.game.IKeyCodeGetable;
 import t_panda.game.event.GameDrawEvent;
@@ -18,15 +17,15 @@ import t_panda.game.event.GameDrawListener;
 /**
  * ゲームオブジェクトを操作するJPanel継承クラス
  */
-public class GamePanel<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> extends JPanel implements KeyListener, MouseListener, MouseMotionListener, GameDrawListener {
+public class GamePanel<SCENE extends Enum<SCENE>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> extends JPanel implements KeyListener, MouseListener, MouseMotionListener, GameDrawListener {
     /** */
-    private final IGame<SCENE, OBJ_TAG, VKEYPAD> game;
+    private final IGame<SCENE, VKEYPAD> game;
 
     /**
      * コンストラクタ
      * @param game ゲームオブジェクト
      */
-    public GamePanel(IGame<SCENE, OBJ_TAG, VKEYPAD> game) {
+    public GamePanel(IGame<SCENE, VKEYPAD> game) {
         setFocusable(true);
         setRequestFocusEnabled(true);
         grabFocus();
@@ -80,7 +79,7 @@ public class GamePanel<SCENE extends Enum<SCENE>, OBJ_TAG extends Enum<OBJ_TAG>,
      * 自身に設定されたIGame継承オブジェクトを取得します。
      * @return 自身に設定されたIGame継承オブジェクト
      */
-    public IGame<SCENE, OBJ_TAG, VKEYPAD> getGame() {
+    public IGame<SCENE, VKEYPAD> getGame() {
         return this.game;
     }
 }

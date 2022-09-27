@@ -15,7 +15,9 @@ import javax.imageio.ImageIO;
 /**
  * IGObjectを実装した基幹クラスです。
  */
-abstract public class GObject<SCENE extends Enum<SCENE> , TAG extends Enum<TAG>, VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable> implements IGObject<SCENE, TAG, VKEYPAD> {
+abstract public class GObject<SCENE extends Enum<SCENE>,TAG extends Enum<TAG>,VKEYPAD extends Enum<VKEYPAD> & IKeyCodeGetable,MSG,CHILD extends IGObject<SCENE, TAG, VKEYPAD, MSG, ?>>
+
+    implements IGObject<SCENE, TAG, VKEYPAD, MSG, CHILD> {
     /**
      * サイズ変更の際のスケーリング方法
      */
@@ -37,13 +39,13 @@ abstract public class GObject<SCENE extends Enum<SCENE> , TAG extends Enum<TAG>,
     /**  */ private int hitWidth;
     /**  */ private int drawCenterX;
     /**  */ private int drawCenterY;
-    /**  */ private IGObjectHost<SCENE, TAG, VKEYPAD> host;
-    /**  */ private ArrayList<IGObject<SCENE, TAG, VKEYPAD>> children;
-    /**  */ private ArrayList<IGObject<SCENE, TAG, VKEYPAD>> addObjs;
+    /**  */ private IGObjectHost<SCENE, TAG, VKEYPAD, MSG, IGObject<SCENE, TAG, VKEYPAD, MSG, ?>> host;
+    /**  */ private ArrayList<CHILD> children;
+    /**  */ private ArrayList<CHILD> addObjs;
     /**  */ private int drawWidth;
     /**  */ private int drawHeight;
     /**  */ private long frameCount;
-    /**  */ private IScene<SCENE, TAG, VKEYPAD> scene;
+    /**  */ private IScene<SCENE, TAG, VKEYPAD, MSG, ?> scene;
     /**  */ private int hitCenterX;
     /**  */ private int hitCenterY;
 
@@ -167,36 +169,23 @@ abstract public class GObject<SCENE extends Enum<SCENE> , TAG extends Enum<TAG>,
     }
 
     @Override
-    public void update(IKeyInput<VKEYPAD> keyInput, MouseInput mouseInput) {
+    public void update(IKeyInput<VKEYPAD> keyInput, IMouseInput mouseInput) {
         updateChildObj(children, keyInput, mouseInput);
         frameCount++;
     }
 
     @Override
-    public void addObj(IGObject<SCENE, TAG, VKEYPAD> obj) {
+    public void addObj(CHILD obj) {
         this.addObjs.add(obj);
-        obj.init(IGObject.createInitArg(this, scene));
+        obj.init(IGObject.createInitArg(host, scene));
     }
     @Override
-    public void addObjToHost(IGObject<SCENE, TAG, VKEYPAD> obj) {
-        this.host.addObj(obj);
-        obj.init(IGObject.createInitArg(this, scene));
-    }
-    @Override
-    public void addObjToScene(IGObject<SCENE, TAG, VKEYPAD> obj) {
-        this.scene.addObj(obj);
-    }
-    @Override
-    public void destroyObject(IGObject<SCENE, TAG, VKEYPAD> obj) {
+    public void destroyObject(CHILD obj) {
         obj.destroy();
-    }
-    @Override
-    public void destroyObjectFromHost(IGObject<SCENE, TAG, VKEYPAD> obj) {
-        this.host.destroyObject(obj);
     }
 
     @Override
-    public void init(InitArg<SCENE, TAG, VKEYPAD> initArg) {
+    public void init(InitArg<SCENE, TAG, VKEYPAD, MSG> initArg) {
         initMetaData(initArg);
         initObjImage();
         initObjArrayList();
@@ -220,7 +209,7 @@ abstract public class GObject<SCENE extends Enum<SCENE> , TAG extends Enum<TAG>,
     }
 
     @Override
-    public IGObject<SCENE, TAG, VKEYPAD> getChildByIndex(int index) {
+    public CHILD getChildByIndex(int index) {
         return this.children.get(index);
     }
     @Override
@@ -307,10 +296,26 @@ abstract public class GObject<SCENE extends Enum<SCENE> , TAG extends Enum<TAG>,
     public void changeScene(SCENE scene, Object initData) {
         this.scene.changeScene(scene, initData);
     }
+
+    /**
+     * シーンに対してメッセージを送信します。
+     * @param msg シーンに送信するメッセージ
+     */
+    protected void sendMessageToScene(MSG msg) {
+        this.scene.onMessageFromObj(this, msg);
+    }
+    /**
+     * 自身が属しているホストに対してメッセージを送信します。
+     * @param msg 自身が属しているホストに送信するメッセージ
+     */
+    protected void sendMessageToHost(MSG msg) {
+        if(this.host == null) sendMessageToScene(msg);
+        else  this.host.onMessageFromChild(this, msg);
+    }
     
     @Override
     public boolean imageUpdate(Image arg0, int arg1, int arg2, int arg3, int arg4, int arg5) {
-        return this.host.imageUpdate(arg0, arg1, arg2, arg3, arg4, arg5);
+        return this.scene.imageUpdate(arg0, arg1, arg2, arg3, arg4, arg5);
     }
 
     // ================= Final Method =================
@@ -331,7 +336,7 @@ abstract public class GObject<SCENE extends Enum<SCENE> , TAG extends Enum<TAG>,
      * 内部処理を正常に行うための初期化処理。通常{@link #init(t_panda.game.IGObject.InitArg)}で呼び出されます。
      * @param initArg 初期化処理の際に使用する引数オブジェクト
      */
-    final protected void initMetaData(InitArg<SCENE, TAG, VKEYPAD> initArg) {
+    final protected void initMetaData(InitArg<SCENE, TAG, VKEYPAD, MSG> initArg) {
         this.host = initArg.getHost();
         this.frameCount = 0;
         this.scene = initArg.getScene();

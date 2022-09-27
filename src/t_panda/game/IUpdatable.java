@@ -9,7 +9,7 @@ public interface IUpdatable<E extends Enum<E> & IKeyCodeGetable> {
      * @param keyInput キー入力情報を保持したオブジェクト
      * @param mouseInput マウス入力情報を保持したオブジェクト
      */
-    void update(IKeyInput<E> keyInput, MouseInput mouseInput);
+    void update(IKeyInput<E> keyInput, IMouseInput mouseInput);
     /**
      * 自身が初期化されてから経過したフレーム数を取得します
      * @return 自身が初期化されてから経過したフレーム数
